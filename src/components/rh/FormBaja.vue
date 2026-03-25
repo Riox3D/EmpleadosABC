@@ -1,26 +1,123 @@
 <template>
-  <q-card-section>
-    <q-input label="Buscar empleado (ID o Nombre)" outlined @blur="buscarEmpleado" />
+  <div>
+    <div class="row items-center q-gutter-sm q-mb-lg text-negative">
+      <q-icon name="person_remove" size="md" />
+      <div class="text-h6 text-weight-bold">Formulario de Baja de Personal</div>
+    </div>
 
-    <q-input
-      v-model="empleado.nombre"
-      label="Empleado seleccionado"
-      outlined
-      disable
-      class="q-mt-sm"
-    />
+    <div class="row q-col-gutter-lg">
+      <div class="col-12">
+        <q-card flat bordered class="bg-grey-1" style="border-radius: 8px">
+          <q-card-section class="q-pa-md">
+            <div class="text-subtitle2 text-grey-8 q-mb-sm">1. Localiza al empleado</div>
+            <q-input
+              v-model="busqueda"
+              label="Ingresa ID o Nombre completo"
+              outlined
+              bg-color="white"
+              dense
+              hint="Presiona Enter o sal del campo para buscar"
+              @blur="buscarEmpleado"
+              @keyup.enter="buscarEmpleado"
+              class="full-width"
+            >
+              <template v-slot:prepend>
+                <q-icon name="search" color="primary" />
+              </template>
+              <template v-slot:append>
+                <q-btn
+                  round
+                  dense
+                  flat
+                  icon="arrow_forward"
+                  color="primary"
+                  @click="buscarEmpleado"
+                />
+              </template>
+            </q-input>
+          </q-card-section>
+        </q-card>
+      </div>
 
-    <q-input v-model="fechaBaja" type="date" label="Fecha de baja" outlined class="q-mt-sm" />
-    <div class="row justify-end">
+      <transition name="q-transition--fade">
+        <div class="col-12 row q-col-gutter-md items-center" v-if="empleado.id">
+          <div class="col-12 col-sm-7">
+            <q-item
+              class="bg-white shadow-1 rounded-borders q-pa-md"
+              style="border: 1px solid #e0e0e0"
+            >
+              <q-item-section avatar>
+                <q-avatar
+                  size="60px"
+                  color="negative"
+                  text-color="white"
+                  icon="person"
+                  class="shadow-2"
+                />
+              </q-item-section>
+
+              <q-item-section>
+                <q-item-label caption class="text-weight-bold text-negative"
+                  >EMPLEADO SELECCIONADO</q-item-label
+                >
+                <q-item-label class="text-h6 text-weight-bold text-dark">{{
+                  empleado.nombre
+                }}</q-item-label>
+                <q-item-label caption class="text-grey-7"
+                  >ID: {{ empleado.id }} | Área: {{ empleado.area }}</q-item-label
+                >
+              </q-item-section>
+
+              <q-item-section side>
+                <q-btn round flat icon="close" color="grey-6" dense @click="limpiarBusqueda">
+                  <q-tooltip>Cambiar empleado</q-tooltip>
+                </q-btn>
+              </q-item-section>
+            </q-item>
+          </div>
+
+          <div class="col-12 col-sm-5">
+            <q-input
+              v-model="fechaBaja"
+              type="date"
+              label="Fecha efectiva de baja"
+              outlined
+              bg-color="white"
+              stack-label
+              class="full-width"
+            >
+              <template v-slot:prepend>
+                <q-icon name="event_busy" color="negative" />
+              </template>
+            </q-input>
+          </div>
+        </div>
+
+        <div
+          v-else
+          class="col-12 text-center q-py-xl text-grey-5 bg-grey-1 rounded-borders q-mt-md"
+          style="border: 2px dashed #ccc"
+        >
+          <q-icon name="find_in_page" size="4rem" class="q-mb-sm" />
+          <div class="text-h6">Esperando búsqueda</div>
+          <div>Utiliza el buscador de arriba para seleccionar un empleado</div>
+        </div>
+      </transition>
+    </div>
+
+    <q-separator class="q-mt-xl q-mb-md" />
+    <div class="row justify-end q-gutter-sm">
       <q-btn
-        label="Enviar solicitud"
+        label="Procesar Baja Definitiva"
+        icon="delete_forever"
         color="negative"
-        class="q-mt-md"
-        :disable="!empleado.nombre"
+        unelevated
+        class="q-px-lg text-weight-bold"
+        :disable="!empleado.id || !fechaBaja"
         @click="submit"
       />
     </div>
-  </q-card-section>
+  </div>
 </template>
 
 <script setup>
@@ -28,15 +125,27 @@ import { ref } from 'vue'
 
 const emit = defineEmits(['submit'])
 
+const busqueda = ref('')
 const empleado = ref({})
 const fechaBaja = ref('')
 
 function buscarEmpleado() {
-  // Simulación de búsqueda
-  empleado.value = {
-    id: 'EMP-1234',
-    nombre: 'Juan Pérez',
+  // Simulación de búsqueda exitosa si hay texto
+  if (busqueda.value.trim() !== '') {
+    empleado.value = {
+      id: 'EMP-1234',
+      nombre: 'Juan Pérez Rodríguez',
+      area: 'Tecnologías de la Información',
+    }
+  } else {
+    empleado.value = {}
   }
+}
+
+function limpiarBusqueda() {
+  busqueda.value = ''
+  empleado.value = {}
+  fechaBaja.value = ''
 }
 
 function submit() {
