@@ -2,7 +2,7 @@
   <q-table
     :rows="solicitudes"
     :columns="columns"
-    row-key="id"
+    row-key="idSolicitud"
     flat
     bordered
     class="my-sticky-header-table"
@@ -11,13 +11,13 @@
     <template v-slot:body-cell-estatus="props">
       <q-td :props="props">
         <q-chip
-          :color="getColorEstatus(props.row.estatus)"
+          :color="getColorEstatus(props.row.estatusSolicitud)"
           text-color="white"
           dense
           class="text-weight-bold"
           size="sm"
         >
-          {{ props.row.estatus }}
+          {{ props.row.estatusSolicitud }}
         </q-chip>
       </q-td>
     </template>
@@ -30,7 +30,7 @@
           round
           flat
           color="primary"
-          @click="emit('ver', props.row.id)"
+          @click="emit('ver', props.row.idSolicitud)"
         >
           <q-tooltip class="bg-primary" :offset="[10, 10]"> Ver seguimiento </q-tooltip>
         </q-btn>
@@ -72,13 +72,13 @@ const columns = [
   {
     name: 'id',
     label: 'ID',
-    field: 'id',
+    field: 'idSolicitud',
     align: 'left',
     classes: 'text-weight-bold text-primary',
   },
-  { name: 'tipo', label: 'Tipo', field: 'tipo', align: 'left' },
-  { name: 'empleado', label: 'Empleado', field: 'empleado', align: 'left' },
-  { name: 'estatus', label: 'Estatus', field: 'estatus', align: 'center' },
+  { name: 'tipo', label: 'Tipo', field: 'tipoMovimiento', align: 'left' },
+  { name: 'empleado', label: 'Empleado', field: 'nombreCompleto', align: 'left' },
+  { name: 'estatus', label: 'Estatus', field: 'estatusSolicitud', align: 'center' },
   { name: 'acciones', label: 'Acciones', field: '', align: 'center', sortable: false },
 ]
 </script>

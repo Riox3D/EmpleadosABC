@@ -1,7 +1,11 @@
 <template>
   <q-page class="q-pa-lg bg-grey-1">
-    <div class="row justify-center">
-      <div class="col-12 col-xl-10">
+    <div class="row justify-center relative-position">
+      <q-inner-loading :showing="cargando" style="z-index: 10">
+        <q-spinner-gears size="50px" color="primary" />
+      </q-inner-loading>
+
+      <div class="col-12 col-xl-10" v-if="!cargando">
         <q-card class="shadow-3 q-mb-lg" style="border-radius: 12px">
           <q-card-section class="bg-primary text-white row items-center justify-between q-pa-md">
             <div class="row items-center q-gutter-md">
@@ -11,18 +15,18 @@
               <div>
                 <div class="text-h6 text-weight-bold">Seguimiento de Solicitud</div>
                 <div class="text-subtitle2 text-white" style="opacity: 0.8">
-                  Folio: {{ solicitud.folio }}
+                  Folio: {{ solicitud.idSolicitud }}
                 </div>
               </div>
             </div>
 
             <q-chip
-              :color="solicitud.estatus === 'En proceso' ? 'warning' : 'positive'"
+              :color="solicitud.estatusSolicitud === 'En proceso' ? 'warning' : 'positive'"
               text-color="white"
               icon="sync"
               class="text-weight-bold"
             >
-              {{ solicitud.estatus }}
+              {{ solicitud.estatusSolicitud }}
             </q-chip>
           </q-card-section>
         </q-card>
@@ -40,12 +44,14 @@
 
               <q-list class="q-pa-sm">
                 <q-item>
-                  <q-item-section avatar
-                    ><q-icon color="grey-7" name="swap_horiz"
-                  /></q-item-section>
+                  <q-item-section avatar>
+                    <q-icon color="grey-7" name="swap_horiz" />
+                  </q-item-section>
                   <q-item-section>
                     <q-item-label caption>Tipo de Movimiento</q-item-label>
-                    <q-item-label class="text-weight-bold">{{ solicitud.tipo }}</q-item-label>
+                    <q-item-label class="text-weight-bold">{{
+                      solicitud.tipoMovimiento
+                    }}</q-item-label>
                   </q-item-section>
                 </q-item>
 
@@ -53,7 +59,7 @@
                   <q-item-section avatar><q-icon color="grey-7" name="person" /></q-item-section>
                   <q-item-section>
                     <q-item-label caption>Empleado</q-item-label>
-                    <q-item-label>{{ solicitud.empleado }}</q-item-label>
+                    <q-item-label>{{ solicitud.nombreCompleto }}</q-item-label>
                   </q-item-section>
                 </q-item>
 
@@ -71,7 +77,7 @@
                   <q-item-section avatar><q-icon color="grey-7" name="business" /></q-item-section>
                   <q-item-section>
                     <q-item-label caption>Área de adscripción</q-item-label>
-                    <q-item-label>{{ solicitud.area }}</q-item-label>
+                    <q-item-label>{{ solicitud.areaAdscripcion }}</q-item-label>
                   </q-item-section>
                 </q-item>
 
@@ -154,69 +160,83 @@
           </div>
         </div>
 
-        <DialogRegistrarAvance v-model="mostrarDialogo" @guardar="actualizarAvances" />
+        <DialogRegistrarAvance
+          v-model="mostrarDialogo"
+          :pasosActuales="pasos"
+          @guardar="actualizarAvances"
+        />
       </div>
     </div>
   </q-page>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useQuasar } from 'quasar'
 import DialogRegistrarAvance from 'components/rh/DialogRegistrarAvance.vue'
+import { apiObtenerSeguimiento, apiActualizarAvances } from 'src/services/solicitudesService'
 
+const route = useRoute()
+const $q = useQuasar()
 const mostrarDialogo = ref(false)
+const cargando = ref(true)
 
-const solicitud = ref({
-  folio: 'SOL-001',
-  estatus: 'En proceso',
-  tipo: 'Alta',
-  empleado: 'Juan Pérez Rodríguez',
-  curp: 'JUPR900101HDFRXX00',
-  area: 'Tecnologías de la Información (TI)',
-  fechaIngreso: '01/11/2023',
+const solicitud = ref({})
+const pasos = ref([])
+
+onMounted(async () => {
+  try {
+    cargando.value = true
+    const data = await apiObtenerSeguimiento(route.params.id)
+    solicitud.value = data
+    pasos.value = data.pasos || []
+  } catch (error) {
+    console.error('Error al cargar el seguimiento:', error)
+  } finally {
+    cargando.value = false
+  }
 })
-
-const pasos = ref([
-  {
-    titulo: 'Creación de correo',
-    responsableNombre: 'Juan Pérez',
-    completado: false,
-    dato: '',
-    comentario: '',
-  },
-  {
-    titulo: 'Creación de cuenta A.D',
-    responsableNombre: 'María López',
-    completado: false,
-    dato: '',
-    comentario: '',
-  },
-  {
-    titulo: 'Creación y entrega de credencial',
-    responsableNombre: 'Juan Pérez',
-    completado: false,
-    dato: '',
-    comentario: '',
-  },
-])
 
 function abrirDialogo() {
   mostrarDialogo.value = true
 }
 
-function actualizarAvances(avancesDelDialog) {
-  // Tomamos los datos que emitió el dialog y sobrescribimos nuestra línea de tiempo
-  pasos.value = avancesDelDialog.map((av) => ({
-    titulo: av.titulo,
-    responsableNombre: av.responsableNombre || 'No asignado',
-    completado: av.completado,
-    dato: av.dato,
-    comentario: av.comentario,
-  }))
+async function actualizarAvances(avancesDelDialog) {
+  try {
+    const nuevosPasos = avancesDelDialog.map((av) => ({
+      titulo: av.titulo,
+      responsableNombre: av.responsableNombre || 'No asignado',
+      completado: av.completado,
+      dato: av.dato,
+      comentario: av.comentario,
+    }))
 
-  const todoCompletado = pasos.value.every((p) => p.completado)
-  if (todoCompletado) {
-    solicitud.value.estatus = 'Finalizada'
+    // Mandamos a guardar a la BD (Servicio)
+    await apiActualizarAvances(solicitud.value.idSolicitud, nuevosPasos)
+
+    // Si tuvo éxito, actualizamos la vista
+    pasos.value = nuevosPasos
+
+    const todoCompletado = pasos.value.every((p) => p.completado)
+    if (todoCompletado) {
+      solicitud.value.estatusSolicitud = 'Finalizada'
+    }
+
+    mostrarDialogo.value = false
+
+    $q.notify({
+      color: 'positive',
+      icon: 'check_circle',
+      message: 'Avances guardados correctamente',
+    })
+  } catch (error) {
+    console.error(error)
+    $q.notify({
+      color: 'negative',
+      icon: 'error',
+      message: 'Error al guardar los avances',
+    })
   }
 }
 </script>

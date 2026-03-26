@@ -48,7 +48,10 @@
           <q-separator />
 
           <q-card-section class="q-pa-none">
-            <div class="q-pa-md">
+            <div class="q-pa-md relative-position">
+              <q-inner-loading :showing="cargando">
+                <q-spinner-gears size="50px" color="primary" />
+              </q-inner-loading>
               <TablaSolicitudes :solicitudes="solicitudesFiltradas" @ver="verSeguimiento" />
             </div>
           </q-card-section>
@@ -59,27 +62,36 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import TablaSolicitudes from 'components/rh/TablaSolicitudes.vue'
+import { apiObtenerSolicitudes } from 'src/services/solicitudesService'
 
 const router = useRouter()
 
 const filtroEstatus = ref(null)
 const estatus = ['En proceso', 'Terminada', 'Finalizada', 'Cancelada']
 
-const solicitudes = ref([
-  { id: 'SOL-001', tipo: 'Alta', estatus: 'En proceso', empleado: 'Juan Pérez' },
-  { id: 'SOL-002', tipo: 'Baja', estatus: 'Finalizada', empleado: 'Ana López' },
-])
+const solicitudes = ref([])
+const cargando = ref(true)
 
 const solicitudesFiltradas = computed(() => {
   if (!filtroEstatus.value) return solicitudes.value
-  return solicitudes.value.filter((s) => s.estatus === filtroEstatus.value)
+  return solicitudes.value.filter((s) => s.estatusSolicitud === filtroEstatus.value)
 })
 
-function verSeguimiento(id) {
-  console.log('Redirigiendo a seguimiento del ID:', id)
-  router.push('/seguimiento')
+onMounted(async () => {
+  try {
+    cargando.value = true
+    solicitudes.value = await apiObtenerSolicitudes()
+  } catch (error) {
+    console.error('Error al cargar solicitudes:', error)
+  } finally {
+    cargando.value = false
+  }
+})
+
+function verSeguimiento(idSolicitud) {
+  router.push(`/seguimiento/${idSolicitud}`)
 }
 </script>

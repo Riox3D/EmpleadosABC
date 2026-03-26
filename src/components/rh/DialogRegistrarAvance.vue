@@ -93,10 +93,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   modelValue: Boolean,
+  pasosActuales: {
+    type: Array,
+    default: () => [],
+  },
 })
 
 const emit = defineEmits(['update:modelValue', 'guardar'])
@@ -110,48 +114,45 @@ const agentes = ref([
   { id: 1, nombre: 'Juan Pérez', tipo: 'alta' },
   { id: 2, nombre: 'María López', tipo: 'alta' },
   { id: 3, nombre: 'Carlos Díaz', tipo: 'baja' },
+  { id: 4, nombre: 'Admin', tipo: 'sistema' },
+  { id: 5, nombre: 'Soporte', tipo: 'sistema' },
 ])
 
-const formAvances = ref([
-  {
-    titulo: 'Creación de correo',
-    labelDato: 'Correo creado',
-    completado: false,
-    responsableId: 1, // Pre-asignado a Juan Pérez
-    responsableNombre: '',
-    dato: '',
-    comentario: '',
+const formAvances = ref([])
+
+watch(
+  () => props.modelValue,
+  (isOpen) => {
+    if (isOpen) {
+      formAvances.value = props.pasosActuales.map((paso) => {
+        const agenteEncontrado = agentes.value.find((a) => a.nombre === paso.responsableNombre)
+
+        return {
+          titulo: paso.titulo,
+          labelDato: `Información requerida`, // Puedes hacer esto dinámico si lo necesitas
+          completado: paso.completado || false,
+          responsableId: agenteEncontrado ? agenteEncontrado.id : null,
+          responsableNombre: paso.responsableNombre || '',
+          dato: paso.dato || '',
+          comentario: paso.comentario || '',
+        }
+      })
+    }
   },
-  {
-    titulo: 'Creación de cuenta A.D',
-    labelDato: 'Cuenta A.D creada',
-    completado: false,
-    responsableId: 2, // Pre-asignado a María López
-    responsableNombre: '',
-    dato: '',
-    comentario: '',
-  },
-  {
-    titulo: 'Creación y entrega de credencial',
-    labelDato: 'Folio o identificador',
-    completado: false,
-    responsableId: 1, // Pre-asignado a Juan Pérez
-    responsableNombre: '',
-    dato: '',
-    comentario: '',
-  },
-])
+)
 
 function guardar() {
   const avancesProcesados = formAvances.value.map((av) => {
     const agente = agentes.value.find((a) => a.id === av.responsableId)
     return {
-      ...av,
-      responsableNombre: agente ? agente.nombre : '',
+      titulo: av.titulo,
+      completado: av.completado,
+      responsableNombre: agente ? agente.nombre : av.responsableNombre,
+      dato: av.dato,
+      comentario: av.comentario,
     }
   })
 
   emit('guardar', avancesProcesados)
-  dialogModel.value = false
 }
 </script>
