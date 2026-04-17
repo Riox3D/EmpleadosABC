@@ -66,18 +66,48 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import TablaSolicitudes from 'components/rh/TablaSolicitudes.vue'
 import { apiObtenerSolicitudes } from 'src/services/solicitudesService'
+import { useAuth } from 'src/composables/useAuth'
 
 const router = useRouter()
 
+const { esValidadorTI, esGerente, esResponsable, usuarioLogueado } = useAuth()
+
 const filtroEstatus = ref(null)
-const estatus = ['En proceso', 'Terminada', 'Finalizada', 'Cancelada']
+const estatus = [
+  'Pendiente de validación TI',
+  'Pendiente aprobación gerencial',
+  'En proceso',
+  'Finalizada',
+  'Cancelada',
+]
 
 const solicitudes = ref([])
 const cargando = ref(true)
 
 const solicitudesFiltradas = computed(() => {
-  if (!filtroEstatus.value) return solicitudes.value
-  return solicitudes.value.filter((s) => s.estatusSolicitud === filtroEstatus.value)
+  let resultado = solicitudes.value
+
+  if (esValidadorTI.value) {
+    resultado = resultado.filter((s) => s.estatusSolicitud === 'Pendiente de validación TI')
+  } else if (esGerente.value) {
+    resultado = resultado.filter(
+      (s) =>
+        s.estatusSolicitud === 'Pendiente aprobación gerencial' &&
+        s.jefeInmediato === usuarioLogueado.value.nombre,
+    )
+  } else if (esResponsable.value) {
+    resultado = resultado.filter(
+      (s) =>
+        s.estatusSolicitud === 'En proceso' &&
+        s.responsables.includes(usuarioLogueado.value.nombre),
+    )
+  }
+
+  if (filtroEstatus.value) {
+    resultado = resultado.filter((s) => s.estatusSolicitud === filtroEstatus.value)
+  }
+
+  return resultado
 })
 
 onMounted(async () => {
