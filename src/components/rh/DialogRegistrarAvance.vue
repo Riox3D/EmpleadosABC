@@ -129,7 +129,7 @@ watch(
 
         return {
           titulo: paso.titulo,
-          labelDato: `Información requerida`, // Puedes hacer esto dinámico si lo necesitas
+          labelDato: `Información requerida`,
           completado: paso.completado || false,
           responsableId: agenteEncontrado ? agenteEncontrado.id : null,
           responsableNombre: paso.responsableNombre || '',

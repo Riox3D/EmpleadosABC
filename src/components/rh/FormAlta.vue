@@ -69,7 +69,6 @@ import { ref } from 'vue'
 const emit = defineEmits(['submit'])
 
 const areas = ['TI', 'RH', 'Finanzas']
-
 const form = ref({
   nombre: '',
   curp: '',
