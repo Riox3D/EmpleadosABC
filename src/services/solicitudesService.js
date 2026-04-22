@@ -96,8 +96,6 @@ export const apiObtenerSeguimiento = async (idSolicitud) => {
 
   const solicitudBase = mockSolicitudes.find((s) => s.idSolicitud === idSolicitud)
 
-  /* Fallback a SOL-001: Previene que la vista crashee buscando propiedades en undefined
-     si el router envía un ID que no existe en nuestro mock local. */
   const detalle = mockDetalles[idSolicitud] || mockDetalles['SOL-001']
 
   if (!solicitudBase) {
