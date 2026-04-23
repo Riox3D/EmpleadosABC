@@ -17,14 +17,10 @@
             <p class="text-subtitle2 text-grey-8 q-mb-sm">
               Selecciona el tipo de trámite que deseas realizar:
             </p>
-            <q-select
-              v-model="tipoMovimiento"
-              :options="tipos"
-              label="Tipo de movimiento"
-              outlined
-              bg-color="white"
-              class="q-mb-md"
-            >
+
+            <q-select v-model="tipoMovimiento" :options="opcionesMovimiento" option-value="idTipoMovimiento"
+              option-label="descripcion" emit-value map-options label="Tipo de movimiento" outlined bg-color="white"
+              class="q-mb-md">
               <template v-slot:prepend>
                 <q-icon name="swap_horiz" color="primary" />
               </template>
@@ -35,9 +31,9 @@
 
           <div class="q-pa-md">
             <transition name="q-transition--fade" mode="out-in">
-              <FormAlta v-if="tipoMovimiento === 'Alta'" @submit="enviarSolicitud" />
-              <FormBaja v-else-if="tipoMovimiento === 'Baja'" @submit="enviarSolicitud" />
-              <FormCambio v-else-if="tipoMovimiento === 'Cambio'" @submit="enviarSolicitud" />
+              <FormAlta v-if="tipoMovimiento === 1" @submit="enviarSolicitud" />
+              <FormBaja v-else-if="tipoMovimiento === 2" @submit="enviarSolicitud" />
+              <FormCambio v-else-if="tipoMovimiento === 3" @submit="enviarSolicitud" />
 
               <div v-else class="text-center q-py-xl text-grey-5">
                 <q-icon name="touch_app" size="4xl" class="q-mb-sm" />
@@ -53,19 +49,64 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import FormAlta from 'components/rh/FormAlta.vue'
-import FormBaja from 'components/rh/FormBaja.vue'
-import FormCambio from 'components/rh/FormCambio.vue'
+import { useQuasar } from 'quasar'
+import api from 'src/services/api'
+import FormAlta from 'src/components/rh/FormAlta.vue'
+import FormBaja from 'src/components/rh/FormBaja.vue'
+import FormCambio from 'src/components/rh/FormCambio.vue'
 
 const router = useRouter()
+const $q = useQuasar()
+
 const tipoMovimiento = ref(null)
-const tipos = ['Alta', 'Baja', 'Cambio']
+const opcionesMovimiento = ref([])
 
-function enviarSolicitud(data) {
-  console.log('Solicitud enviada', data)
+const usuario = ref({
+  claveUsuario: 'EMP01'
+})
 
-  router.push('/')
+// --- FUNCIONES ---
+
+onMounted(async () => {
+  try {
+    const response = await api.get('/movimientos')
+    opcionesMovimiento.value = response.data
+  } catch (error) {
+    console.error('Error al cargar movimientos:', error)
+  }
+})
+
+async function enviarSolicitud(data) {
+  const payload = {
+    // Ahora sí, usuario ya existe y tiene .value
+    claveUsuario: usuario.value.claveUsuario,
+    idTipoMovimiento: tipoMovimiento.value,
+    claveEmpleado: data.claveEmpleado
+  }
+
+  try {
+    $q.loading.show({ message: 'Guardando solicitud en BD...' })
+
+    const response = await api.post('/solicitudes', payload)
+
+    $q.notify({
+      color: 'positive',
+      icon: 'check',
+      message: '¡Solicitud guardada con el Folio: ' + response.data.idGenerado
+    })
+
+    router.push('/')
+
+  } catch (error) {
+    $q.notify({
+      color: 'negative',
+      icon: 'error',
+      message: 'Error al guardar: ' + error.message
+    })
+  } finally {
+    $q.loading.hide()
+  }
 }
 </script>
