@@ -67,7 +67,6 @@ const usuario = ref({
   claveUsuario: 'EMP01'
 })
 
-// --- FUNCIONES ---
 
 onMounted(async () => {
   try {
@@ -80,7 +79,6 @@ onMounted(async () => {
 
 async function enviarSolicitud(data) {
   const payload = {
-    // Ahora sí, usuario ya existe y tiene .value
     claveUsuario: usuario.value.claveUsuario,
     idTipoMovimiento: tipoMovimiento.value,
     claveEmpleado: data.claveEmpleado

@@ -4,62 +4,25 @@
 
     <div class="row q-col-gutter-md">
       <div class="col-12">
-        <q-input
-          v-model="form.nombre"
-          label="Nombre completo del empleado"
-          outlined
-          bg-color="white"
-        >
-          <template v-slot:prepend><q-icon name="person" /></template>
-        </q-input>
-      </div>
-
-      <div class="col-12 col-sm-6">
-        <q-input
-          v-model="form.curp"
-          label="CURP"
-          outlined
-          bg-color="white"
-          style="text-transform: uppercase"
-        >
-          <template v-slot:prepend><q-icon name="badge" /></template>
-        </q-input>
-      </div>
-
-      <div class="col-12 col-sm-6">
-        <q-input
-          v-model="form.fechaIngreso"
-          type="date"
-          label="Fecha de ingreso"
-          outlined
-          bg-color="white"
-        >
-          <template v-slot:prepend><q-icon name="event" /></template>
+        <q-input v-model="form.claveEmpleado" label="Clave del Empleado (HUMAN) *" outlined
+          :rules="[val => val && val.length > 0 || 'La clave es obligatoria']">
+          <template v-slot:prepend><q-icon name="key" /></template>
         </q-input>
       </div>
 
       <div class="col-12">
-        <q-select
-          v-model="form.area"
-          :options="areas"
-          label="Área de adscripción"
-          outlined
-          bg-color="white"
-        >
-          <template v-slot:prepend><q-icon name="business" /></template>
-        </q-select>
+        <q-input v-model="form.nombre" label="Nombre completo" outlined>
+          <template v-slot:prepend><q-icon name="person" /></template>
+        </q-input>
+      </div>
+
+      <div class="col-12">
+        <q-input v-model="form.observaciones" label="Observaciones adicionales" type="textarea" outlined rows="2" />
       </div>
     </div>
 
     <div class="row justify-end q-mt-lg">
-      <q-btn
-        label="Registrar Alta"
-        icon="person_add"
-        color="primary"
-        unelevated
-        class="q-px-md text-weight-bold"
-        @click="submit"
-      />
+      <q-btn label="Registrar Alta" color="primary" @click="submit" />
     </div>
   </div>
 </template>
@@ -68,15 +31,19 @@
 import { ref } from 'vue'
 const emit = defineEmits(['submit'])
 
-const areas = ['TI', 'RH', 'Finanzas']
 const form = ref({
+  claveEmpleado: '',
   nombre: '',
   curp: '',
   area: '',
   fechaIngreso: '',
+  observaciones: ''
 })
 
 function submit() {
-  emit('submit', { tipo: 'Alta', ...form.value })
+  
+  if (form.value.claveEmpleado) {
+    emit('submit', { ...form.value })
+  }
 }
 </script>
